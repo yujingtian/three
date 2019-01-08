@@ -13,19 +13,36 @@
             font-family: Monospace;
             overflow:hidden
         }
-
         a{
             color:#00f;
         }
     </style>
 </head>
 <body>
+    <div id="container">
+        <br />
+        <br />
+        <br />
+        <br />
+        loading...
+    </div>
+</body>
+
     <script src="./static/three.js"></script>
     <script src="./static/ColladaLoader.js"></script>
     <script src="./static/GLTFLoader.js"></script>
     <script src="./static/VRMLoader.js"></script>
     <script src="./static/TGALoader.js"></script>
+    <script src="./static/js/Detector.js"></script>
     <script>
+        var container;
+         if (!Detector.webgl) {
+            Detector.addGetWebGLMessage();
+            document.getElementById("container").innerHTML = ""
+        }
+
+        container = document.getElementById("container")
+        container.innerHTML = ''
         var lookx = 0;
         var looky = 1;
         var lookz = 0;
@@ -37,7 +54,7 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        document.body.appendChild(renderer.domElement);
+        container.appendChild(renderer.domElement);
         
         //这是场景
         var scene = new THREE.Scene();
@@ -151,7 +168,7 @@
         scene.add(cube);
         //这是照相机
         var camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 0.1, 500);
-        camera.position.set(0,1,2)
+        camera.position.set(0,2,5)
         camera.lookAt(lookx, looky, lookz)
         cube.add(camera);
 
@@ -192,7 +209,7 @@
         var skyBox = new THREE.Mesh(new THREE.BoxBufferGeometry(5000, 5000, 5000), skyBoxMaterial);
         scene.add(skyBox)
         
-    
+            
         function render(){
              renderer.render(scene, camera);
         }
@@ -264,5 +281,4 @@
         renderer.setAnimationLoop(render);
        
     </script> 
-</body>
 </html>

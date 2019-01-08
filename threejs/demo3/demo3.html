@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+				font-family: Monospace;
+				margin: 0px;
+				overflow: hidden;
+			}
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+</body>
+<script src="../static/three.js"></script>
+<script src="../static/js/loaders/OBJLoader.js"></script>
+
+<script src="../static/js/libs/stats.min.js"></script>
+<script>
+    var camera, scene, renderer, mesh;
+    var parent, stats;
+
+    var clonemeshes, meshes
+    
+
+    init();
+    animate();
+    function init(){
+        camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 50000 );
+        camera.position.set(0,700,7000);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000104);
+        scene.fog = new THREE.FogExp2(0x000104,0.0000675)
+
+        camera.lookAt(0, 0, 0)
+
+        var loader = new THREE.OBJLoader();
+        loader.load('../static/models/obj/walt/WaltHead.obj',function(obj){
+            var positions = combineBuffer( obj , 'position' )
+
+            createMesh( positions, scene, 4.05, -500, -350, 600, 0xff7744 )
+
+        })
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio( window.devicePixelRatio );
+
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.autoColor = false;   //是否清除颜色缓存
+        document.body.appendChild( renderer.domElement )
+
+        parent = new THREE.Object3D();
+        scene.add( parent );
+
+        var grid = new THREE.Points( new THREE.PlaneBufferGeometry(15000, 15000, 64, 64),new THREE.PointsMaterial({ color: 0xff0000, size:20 }) )
+
+        grid.position.y = -400;
+        grid.rotation.x = -Math.PI / 2;
+
+        parent.add( grid )
+
+        
+        stats = new Stats();
+        document.body.appendChild(stats.dom)
+
+        window.addEventListener('resize' , onWindowResize, false);
+    }
+
+    function onWindowResize(e){
+        renderer.setSize( window.innerWidth , window.innerHeight )
+        camera.aspect = window.innerWidth / window.innerHeight;
+
+        camera.lookAt(scene.position)
+
+
+    }
+
+
+    // 获取位置信息
+    function combineBuffer( obj , bufferName ){
+        let count = 0;
+        obj.traverse(function( child ){
+            if( child.isMesh )
+            {
+                var buffer = child.geometry.attributes[ bufferName ];
+
+                count += buffer.array.length
+            }
+        })
+
+        var combined = new Float32Array(count);
+
+        let offset = 0;
+
+        obj.traverse(function( child ){
+            if(child.isMesh)
+            {
+                var buffer = child.geometry.attributes[bufferName];
+
+                combined.set( buffer.array, offset );
+
+                offset += buffer.array.length;
+            }
+        })
+
+        return new THREE.BufferAttribute( combined , 3 )
+    }
+
+    //创建网格
+    function createMesh( positions, scene, scale, x, y, z, color ){
+        var geometry = new THREE.BufferGeometry();
+        geometry.addAttribute( 'position' , positions.clone() );
+        geometry.addAttribute( 'initialPosition' , positions.clone() )
+
+        var clones = [
+            [0, 0, 0]
+        ]
+
+        for(var i=0;i < clones.length; i++)
+        {
+            var c = ( i < clones.length -1 ) ? 0x252525 : color;
+
+            mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size:30, color:c } ) )
+
+            mesh.scale.x = mesh.scale.y = mesh.scale.z = scale
+
+            mesh.position.x = x + clones[i][0]
+            mesh.position.y = y + clones[i][1]
+            mesh.position.z = z + clones[i][2]
+
+            parent.add(mesh)
+
+            clonemeshes.push({ mesh: mesh, speed: 0.5 + Math.random() });
+        }
+        meshes.push({
+            mesh: mesh, verticesDown: 0, verticesUp: 0, direction: 0, speed: 15, delay: Math.floor(200 + 200 * Math.random()),
+            start: Math.floor(100 + 200 * Math.random()),
+        });
+    }
+    //渲染
+    function render(){
+        renderer.render(scene, camera)
+    }
+
+    //动画
+    function animate(){
+        requestAnimationFrame( animate );
+        render();
+        stats.update();
+    }
+</script>
+</html>

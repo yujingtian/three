@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body{
+            margin:0;
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <br />
+        <br />
+        <br />
+        <br />
+        loading...
+    </div>
+</body>
+<script src="../static/three.js"></script>
+<script src="../static/js/libs/ammo.js"></script>
+<script src="../static/js/controls/OrbitControls.js"></script>
+<script src="../static/js/libs/stats.min.js"></script>
+<script src="../static/js/Detector.js"></script>
+<script>
+    //检测webgl支持
+    if(!Detector.webgl)
+    {
+        Detector.addGetWebGLMessage();
+        document.getElementById("container").innerHTML = ""
+    }
+    //全局变量
+
+    //绘图相关
+    var container, stats;
+    var camera, controls, scene, renderer;
+    var textureLoader;
+    var clock = new THREE.Clock();
+
+    //物理引擎相关
+    var gravityConstant = -9.8
+    var collisionConfiguration
+    var dispatcher
+    var broadphase
+    var solver
+    var physicsWorld
+    var rigidBodies = []
+    var margin = 0.05
+    var transformAuxl = new Ammo.btTransform()
+
+    //主程序
+        init();
+        animate();
+
+    
+
+    function init(){
+        initGraphics();
+
+        initPhysics();
+
+        createObjects();
+    } 
+
+
+    //初始话图形
+    function initGraphics(){
+        container = document.getElementById("container")
+        container.innerHTML = ''
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000)
+        camera.position.x = -7
+        camera.position.y = 8
+        camera.position.z = 5
+
+        controls = new THREE.OrbitControls(camera)
+        controls.target.y = 2  //设置视线初始的方向(根据照相机的位置)
+
+
+        renderer = new THREE.WebGLRenderer({antialias:true})  //抗锯齿（antialias）
+        renderer.setClearColor(0xbfd1e5)  //重新渲染的颜色
+        renderer.setPixelRatio(window.devicePixelRatio)
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        textureLoader = new THREE.TextureLoader();
+        scene = new THREE.Scene()
+
+        var ambientLight = new THREE.AmbientLight(0x404040); //环境光
+        scene.add(ambientLight);
+
+        var light = new THREE.DirectionalLight(0xffffff,1)
+        light.position.set(-10, 10, 5)
+        light.castShadow = true
+        var d = 20;
+
+        light.shadow.mapSize.width = 2048;  // default
+        light.shadow.mapSize.height = 2048; // default
+
+        light.shadow.camera.left = -d
+        light.shadow.camera.right = d
+        light.shadow.camera.top = d
+        light.shadow.camera.bottom = -d
+
+        light.shadow.camera.near = 1;
+        light.shadow.camera.far = 100;
+
+        scene.add(light)
+
+        container.appendChild(renderer.domElement)
+
+        //查看帧数和内存占用
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute'
+        stats.domElement.style.top = 'absolute'
+
+        container.appendChild(stats.domElement);
+    }
+    //初始话物理信息
+    function initPhysics(){
+        collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();  //默认刚体参数
+        dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+        broadphase = new Ammo.btDbvtBroadphase();
+        solver = new Ammo.btSequentialImpulseConstraintSolver();
+        physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration); //创建力学世界
+        physicsWorld.setGravity(new Ammo.btVector3(0, gravityConstant, 0));  //设置重力的方向
+    }
+
+    function createParallelepiped(sx, sy, sz, mass, pos, quat, material){
+        var threeObject = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz, 1, 1, 1), material)
+        threeObject.castShadow = true
+        threeObject.receiveShadow = true
+        var shape = new Ammo.btBoxShape(new Ammo.btVector3(sx*0.5, sy*0.5, sz*0.5))
+        shape.setMargin(margin) //这是误差
+
+        createRigidBody(threeObject, shape, mass, pos, quat)
+        
+        return threeObject;
+    }
+
+    function createObjects(){
+        var pos = new THREE.Vector3()     
+        var quat = new THREE.Quaternion() //四元数（在三维空间中可以唯一确定一个物体的位置）
+
+        quat.set(0, 0, 0, 1);
+        
+        pos.set(0, -1, 0); 
+        createGround(40, 1, 40, 0, 40, 40, pos, quat);
+        pos.set(0, 2, 20);
+        createGround(40, 5, 1, 0, 40, 5, pos, quat);
+        pos.set(0, 2, -20);
+        createGround(40, 5, 1, 0, 40, 5, pos, quat);
+        pos.set(20, 2, 0);
+        createGround(1, 5, 40, 0, 40, 5, pos, quat);
+        pos.set(-20, 2, 0);
+        createGround(1, 5, 40, 0, 40, 5, pos, quat);      
+
+
+        //创建30个从天而降的正方体
+        for(var i=0; i<500;i++)
+        {
+            pos.set(0, 1+2*i, 0);
+            quat.set(0, 0, 0, 1);
+            createParallelepiped(1, 1, 1, 10, pos, quat,createRandomColorMaterial())
+        }
+    }
+    //创建围墙
+    function createGround(x, y, z, mass, rx, ry, pos, quat){
+        var ground = createParallelepiped(x, y, z, mass, pos, quat, new THREE.MeshPhongMaterial({ color: 0xffffff })) //有光泽的材质
+
+        textureLoader.load("../static/textures/grid.png", function (texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+
+            texture.repeat.set( rx, ry,)
+            ground.material.map = texture;
+            ground.material.needsUpdate = true;
+        })
+    }
+
+    //创建一个随机颜色的材质
+    function createRandomColorMaterial(){
+        var color = Math.floor(Math.random() * (1<<24))
+        return new THREE.MeshPhongMaterial({color:color})
+    }
+
+    function createRigidBody(threeObject, physicsShape, mass, pos, quat){
+        threeObject.position.copy(pos)
+        threeObject.quaternion.copy(quat)
+
+        var transform = new Ammo.btTransform();
+        transform.setIdentity();
+        transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z))                //位移情况
+        transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));  //旋转情况
+        var motionState = new Ammo.btDefaultMotionState(transform); //变换操作
+
+        var localInertia = new Ammo.btVector3(0,0,0)  //惯性附加量
+        physicsShape.calculateLocalInertia(mass, localInertia)  //计算惯性
+        
+        var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
+
+        var body = new Ammo.btRigidBody(rbInfo)  //创建刚体
+
+        threeObject.userData.physicsBody = body  
+
+        scene.add(threeObject);
+
+
+        if(mass > 0)
+        {
+            rigidBodies.push(threeObject)
+
+            body.setActivationState(4) //设置激活状态
+        }
+
+        physicsWorld.addRigidBody(body)
+
+        return body
+
+    }
+
+    function animate(){
+        requestAnimationFrame(animate)
+
+        render();
+
+        stats.update();
+    }
+
+    function render(){
+        var deltaTime = clock.getDelta()
+
+        controls.update(deltaTime)
+
+        updatePhysics(deltaTime)
+
+        renderer.render(scene, camera)
+    }
+
+    function updatePhysics(deltaTime){
+        physicsWorld.stepSimulation(deltaTime) //单步的物理模拟
+
+        for(var i = 0, iL = rigidBodies.length; i < iL;i++)
+        {
+            var objThree = rigidBodies[i]
+            var objPhys = objThree.userData.physicsBody;
+            var ms = objPhys.getMotionState();  //刚体对象是否附加了运动状态
+            if(ms){
+                ms.getWorldTransform(transformAuxl) //获取刚体对象的变换
+                var p = transformAuxl.getOrigin();   //获取位置变换
+                var q = transformAuxl.getRotation();    //获取旋转变换
+                objThree.position.set(p.x(), p.y(), p.z());
+                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w()); //改变物理世界的位置旋转，将物理世界和虚拟世界保持一直
+            }
+        }
+    }
+</script>
+</html>
