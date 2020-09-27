@@ -15,11 +15,11 @@
     <body>
         <div id="app"></div>
     </body> 
-    <script src="./static/three.min.js"></script>
-    <script src="./static/js/controls/OrbitControls.js"></script>
-    <script src="./static/TGALoader.js"></script>
-    <script src="./static/MTLLoader.js"></script>
-    <script src="./static/OBJLoader.js"></script>
+    <script src="../static/three.min.js"></script>
+    <script src="../static/js/controls/OrbitControls.js"></script>
+    <script src="../static/TGALoader.js"></script>
+    <script src="../static/MTLLoader.js"></script>
+    <script src="../static/OBJLoader.js"></script>
     <script>
     // var container = document.getElementById("app")
     // model
@@ -32,14 +32,14 @@
     };
     var onError = function () { };
     new THREE.MTLLoader()
-    .setPath( './static/obj2/WB_ta/scences/' )
+    .setPath( '../static/obj2/WB_ta/scences/' )
     .load( 'ta_1.mtl', function ( materials ) {
 
         materials.preload();
 
         new THREE.OBJLoader()
             .setMaterials( materials )
-            .setPath( './static/obj2/WB_ta/scences/' )
+            .setPath( '../static/obj2/WB_ta/scences/' )
             .load( 'ta_1.obj', function ( object ) {
 
                 object.position.y = 0;

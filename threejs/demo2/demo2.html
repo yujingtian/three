@@ -28,13 +28,13 @@
     </div>
 </body>
 
-    <script src="./static/three.min.js"></script>
-    <script src="./static/js/controls/OrbitControls.js"></script>
-    <script src="./static/ColladaLoader.js"></script>
-    <script src="./static/GLTFLoader.js"></script>
-    <script src="./static/VRMLoader.js"></script>
-    <script src="./static/TGALoader.js"></script>
-    <script src="./static/js/Detector.js"></script>
+    <script src="../static/three.min.js"></script>
+    <script src="../static/js/controls/OrbitControls.js"></script>
+    <script src="../static/ColladaLoader.js"></script>
+    <script src="../static/GLTFLoader.js"></script>
+    <script src="../static/VRMLoader.js"></script>
+    <script src="../static/TGALoader.js"></script>
+    <script src="../static/js/Detector.js"></script>
     
     <script>
         var container;
@@ -83,14 +83,14 @@
             //scene.add(elf)
         });
         var Cloader = new THREE.ColladaLoader(loadingManager);
-        Cloader.load('./static/models/collada/elf/elf.dae', function (collada) {
+        Cloader.load('../static/models/collada/elf/elf.dae', function (collada) {
             console.log(collada)
              elf = collada.scene;
              elf.children[0].castShadow = true;             
         });
         //模型2
         var loader = new THREE.VRMLoader();
-            loader.load('./static/models/vrm/Alicia/AliciaSolid.vrm', function (vrm) {
+            loader.load('../static/models/vrm/Alicia/AliciaSolid.vrm', function (vrm) {
                 // VRMLoader doesn't support VRM Unlit extension yet so
                 // converting all materials to MeshBasicMaterial here as workaround so far.
                 vrm.scene.traverse(function (object) {
@@ -147,7 +147,7 @@
         //这是几何立方体
         var TGAloader = new THREE.TGALoader();
         var geometry = new THREE.BoxBufferGeometry(1, 1, 1);
-        var texture = TGAloader.load("./static/textures/crate_color8.tga")
+        var texture = TGAloader.load("../static/textures/crate_color8.tga")
          var textureLoader = new THREE.TextureLoader();
          var material = new THREE.MeshBasicMaterial({ color: 0xffffff,map:texture });
         var cube = new THREE.Mesh(geometry, material);
@@ -188,7 +188,7 @@
         //scene.add(groundmesh)
 
         //地板贴图
-        textureLoader.load("./static/textures/hardwood2_diffuse.jpg",function(map){
+        textureLoader.load("../static/textures/hardwood2_diffuse.jpg",function(map){
             map.wrapS =THREE.RepeatWrapping;
             map.wrapT = THREE.RepeatWrapping;
             map.anisotropy = 400;
@@ -198,7 +198,7 @@
         })
         //天空盒子
         var cubeTextureLoader = new THREE.CubeTextureLoader();
-        cubeTextureLoader.setPath("./static/textures/cube/skybox/") //设置根目录
+        cubeTextureLoader.setPath("../static/textures/cube/skybox/") //设置根目录
         var cubeTexture = cubeTextureLoader.load([
             'tile_4.jpg', 'tile_2.jpg',
             'tile_5.jpg', 'tile_6.jpg',
