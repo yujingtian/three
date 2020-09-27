@@ -1,0 +1,125 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>地形</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body {
+				font-family: Monospace;
+				margin: 0px;
+                padding:0px;
+				overflow: hidden;
+			}
+        </style>
+    </head>
+    <body>
+        <div id="app"></div>
+    </body> 
+    <script src="./static/three.min.js"></script>
+    <script src="./static/js/controls/OrbitControls.js"></script>
+    <script src="./static/TGALoader.js"></script>
+    <script src="./static/MTLLoader.js"></script>
+    <script src="./static/OBJLoader.js"></script>
+    <script>
+    // var container = document.getElementById("app")
+    // model
+
+    var onProgress = function ( xhr ) {
+        if ( xhr.lengthComputable ) {
+            var percentComplete = xhr.loaded / xhr.total * 100;
+            console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+        }
+    };
+    var onError = function () { };
+    new THREE.MTLLoader()
+    .setPath( './static/obj2/WB_ta/scences/' )
+    .load( 'ta_1.mtl', function ( materials ) {
+
+        materials.preload();
+
+        new THREE.OBJLoader()
+            .setMaterials( materials )
+            .setPath( './static/obj2/WB_ta/scences/' )
+            .load( 'ta_1.obj', function ( object ) {
+
+                object.position.y = 0;
+                object.scale.set(2, 2, 2)
+                scene.add( object );
+
+            }, onProgress, onError );
+
+    } );
+
+    var renderer = new THREE.WebGLRenderer({antialias:true});
+        renderer.setPixelRatio(window.devicePixelRatio) ;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+    
+    var scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0xcccccc );
+        var ambientLight = new THREE.AmbientLight( 0xffffff );
+        scene.add( ambientLight );
+    var camera = new THREE.PerspectiveCamera(70 , window.innerWidth / window.innerHeight , 0.1, 1000) //创建一个远景相机
+    camera.position.z = 60;
+    camera.position.y = 30;
+    var controls = new THREE.OrbitControls( camera, renderer.domElement );
+        controls.maxPolarAngle = Math.PI * 0.8;
+        controls.target.set( 0, 0, 0 );
+        controls.minDistance = 10.0;
+        controls.maxDistance = 1000.0;
+        camera.lookAt(controls.target)
+    scene.add(camera)
+
+    var helper = new THREE.GridHelper( 100, 20);
+        helper.material.opacity = 0.25;
+        helper.material.transparent = true;
+    scene.add( helper );
+    animate()
+
+    //渲染
+    function render(){
+        renderer.render(scene, camera)
+    }
+    //动画
+    function animate(){
+        requestAnimationFrame( animate );
+        render();
+    }
+    function createGround(width, height, widthSeg, heightSeg, Scene){
+        var planeGeometry = new THREE.PlaneBufferGeometry( width, height, widthSeg, heightSeg );
+            planeGeometry.rotateX(- Math.PI / 2);
+        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, wireframe: false} );
+        var ploneMesh = new THREE.Mesh(planeGeometry, planeMaterial) 
+        Scene.add( ploneMesh )
+    }
+
+    function createMountain(width, height, widthSeg, heightSeg, Scene){
+        var planeGeometry = new THREE.PlaneBufferGeometry( width, height, widthSeg, heightSeg );
+            planeGeometry.rotateX(- Math.PI / 2);
+        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, wireframe: false} );
+        var ploneMesh = new THREE.Mesh(planeGeometry, planeMaterial)
+
+
+        var vertex = planeGeometry.attributes.position.array
+        var paramsH = planeGeometry.parameters.heightSegments
+        var paramsW = planeGeometry.parameters.widthSegments
+        for(var i = 0; i < vertex.length; i = i + 3 ){
+            var num = Math.floor( i / 3 )   //整体第几个
+            var row = Math.floor(num / (paramsW + 1))    //第几行
+            var rowNum = num - row * (paramsW + 1)   //第几列
+            var min = Math.min(row % paramsW, rowNum % paramsW)
+            if(min > (paramsW /2)){
+                min = paramsW - Math.max(row % paramsW, rowNum % paramsW)
+            }
+            else if(row <= (paramsW /2) && rowNum > (paramsW /2)){
+                min = Math.min(row % paramsW, (paramsW-rowNum) % paramsW)
+            }
+            else if(row > (paramsW /2) && rowNum <= (paramsW /2)){
+                min = Math.min((paramsW-row) % paramsW, rowNum % paramsW)
+            }
+            vertex[ i + 1 ] = Math.sin(Math.PI / 2 * min / (paramsW /2) ) * 40
+        } 
+        Scene.add( ploneMesh )                                              
+    }
+    </script>
+</html>

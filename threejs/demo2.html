@@ -28,19 +28,21 @@
     </div>
 </body>
 
-    <script src="./static/three.js"></script>
+    <script src="./static/three.min.js"></script>
+    <script src="./static/js/controls/OrbitControls.js"></script>
     <script src="./static/ColladaLoader.js"></script>
     <script src="./static/GLTFLoader.js"></script>
     <script src="./static/VRMLoader.js"></script>
     <script src="./static/TGALoader.js"></script>
     <script src="./static/js/Detector.js"></script>
+    
     <script>
         var container;
          if (!Detector.webgl) {
             Detector.addGetWebGLMessage();
             document.getElementById("container").innerHTML = ""
         }
-
+        var controls;
         container = document.getElementById("container")
         container.innerHTML = ''
         var lookx = 0;
@@ -78,7 +80,7 @@
             elf.scale.x = 0.5
             elf.scale.y = 0.5
             elf.scale.z = 0.5
-            scene.add(elf)
+            //scene.add(elf)
         });
         var Cloader = new THREE.ColladaLoader(loadingManager);
         Cloader.load('./static/models/collada/elf/elf.dae', function (collada) {
@@ -135,7 +137,7 @@
                     }
                 }
                 
-                scene.add(vrm.scene);
+                //scene.add(vrm.scene);
             });
         //这是半圆光
         var light = new THREE.HemisphereLight();
@@ -161,16 +163,21 @@
         cube.castShadow = true;
 
        
-        scene.add(cube2);
-        scene.add(cube3);
-        scene.add(cube4);
-        scene.add(cube5);
-        scene.add(cube);
+        //scene.add(cube2);
+        //scene.add(cube3);
+        //scene.add(cube4);
+        //scene.add(cube5);
+        //scene.add(cube);
         //这是照相机
         var camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 0.1, 500);
-        camera.position.set(0,2,5)
-        camera.lookAt(lookx, looky, lookz)
-        cube.add(camera);
+        camera.position.set(0,2,250)
+        controls = new THREE.OrbitControls( camera, renderer.domElement );
+        controls.maxPolarAngle = Math.PI * 0.8;
+        controls.target.set( 0, 0, 0 );
+        controls.minDistance = 10.0;
+        controls.maxDistance = 500.0;
+        camera.lookAt(controls.target)
+        scene.add(camera);
 
         //这是地板
         var ground = new THREE.PlaneBufferGeometry(100,100,0,0);  
@@ -178,7 +185,7 @@
         var groundMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc })
         var groundmesh = new THREE.Mesh(ground, groundMaterial)  
         groundmesh.receiveShadow = true;
-        scene.add(groundmesh)
+        //scene.add(groundmesh)
 
         //地板贴图
         textureLoader.load("./static/textures/hardwood2_diffuse.jpg",function(map){
@@ -193,9 +200,9 @@
         var cubeTextureLoader = new THREE.CubeTextureLoader();
         cubeTextureLoader.setPath("./static/textures/cube/skybox/") //设置根目录
         var cubeTexture = cubeTextureLoader.load([
-            'px.jpg', 'nx.jpg',
-            'py.jpg', 'ny.jpg',
-            'pz.jpg', 'nz.jpg',
+            'tile_4.jpg', 'tile_2.jpg',
+            'tile_5.jpg', 'tile_6.jpg',
+            'tile_3.jpg', 'tile_1.jpg',
         ])
         var cubeShader = THREE.ShaderLib['cube'];
             cubeShader.uniforms['tCube'].value = cubeTexture;
@@ -206,7 +213,7 @@
                 uniforms: cubeShader.uniforms,
                 side: THREE.BackSide
             });
-        var skyBox = new THREE.Mesh(new THREE.BoxBufferGeometry(5000, 5000, 5000), skyBoxMaterial);
+        var skyBox = new THREE.Mesh(new THREE.BoxBufferGeometry(500, 500, 500), skyBoxMaterial);
         scene.add(skyBox)
         
             
